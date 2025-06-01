@@ -1,4 +1,8 @@
-import { BadRequestException, Injectable, NotFoundException } from '@nestjs/common';
+import {
+  BadRequestException,
+  Injectable,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../../prisma/prisma.service';
 import { CreateUserDto } from '../dto/create-user.dto';
 import UpdateUserDto from '../dto/update-user-dto';
@@ -24,44 +28,27 @@ export class UserRepository {
 
   async findUserAndPostByUserId(id: number) {
     return this.prisma.user.findUnique({
-      where: { id: id },
+      where: { id },
       include: { posts: true },
     });
   }
 
   async findUserByName(name: string) {
     return this.prisma.user.findFirst({
-      where: { name: name },
+      where: { name },
       include: { posts: true },
     });
   }
 
+  async findUserById(id: number) {
+    return this.prisma.user.findUnique({ where: { id } });
+  }
+
+  async findPostsByUserId(userId: number) {
+    return this.prisma.post.findMany({ where: { userId } });
+  }
+
   async deleteUserById(id: number) {
-    const user = await this.prisma.user.findUnique({ where: { id } });
-
-    if (!user) {
-      throw new NotFoundException(`Không thể tìm thấy user`);
-    }
-
-    console.log(`User: ${JSON.stringify(user)}`);
-
-    const postOfCurrentUser = await this.prisma.post.findMany({
-      where: { userId: id },
-    });
-
-    if (postOfCurrentUser.length > 0) {
-      throw new BadRequestException('Không thể xóa vì có bài viết');
-    }
-
-    await this.prisma.user.delete({
-      where: { id },
-    });
-
-    return {
-      message: 'Xóa thành công',
-      status: 'success',
-      data: user,
-    }
-
+    return this.prisma.user.delete({ where: { id } });
   }
 }

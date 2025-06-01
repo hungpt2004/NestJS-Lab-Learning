@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException, BadRequestException } from '@nestjs/common';
 import { UserRepository } from './repository/user.repository';
 import { CreateUserDto } from './dto/create-user.dto';
 import UpdateUserDto from './dto/update-user-dto';
@@ -28,7 +28,23 @@ export class UserService {
   }
 
   async deleteUserById(id: number) {
-    return this.userRepository.deleteUserById(id);
+    const user = await this.userRepository.findUserById(id);
+    if (!user) {
+      throw new NotFoundException(`Không thể tìm thấy user`);
+    }
+
+    const posts = await this.userRepository.findPostsByUserId(id);
+    if (posts.length > 0) {
+      throw new BadRequestException('Không thể xóa vì có bài viết');
+    }
+
+    await this.userRepository.deleteUserById(id);
+
+    return {
+      message: 'Xóa thành công',
+      status: 'success',
+      data: user,
+    };
   }
 
 }
